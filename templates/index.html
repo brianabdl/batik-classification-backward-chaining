@@ -1,76 +1,87 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="form-container">
-    <h2 class="page-title">Klasifikasi Batik Expert System</h2>
+<div class="main-grid">
+    <div class="form-container">
+        <h2 class="page-title">Sistem Pakar Klasifikasi Batik</h2>
+        <p class="page-subtitle">
+            Upload foto batik sebagai referensi (opsional), lalu pilih <strong>Ya</strong> atau <strong>Tidak</strong> untuk setiap karakteristik.
+            Sistem akan menganalisis <strong>teknik pembuatan</strong> dan <strong>kualitas produk</strong> menggunakan metode backward chaining.
+        </p>
 
-    <div class="upload-section">
-        <label for="imageInput">Upload Foto Batik (Opsional)</label>
-        <label for="imageInput" class="upload-btn">Pilih Gambar</label>
-        <input type="file" name="image" id="imageInput" accept="image/*">
-        
-        <div id="previewContainer" style="display:none;">
-            <h4 style="margin: 1rem 0 0.5rem; color: #1e40af;">Preview Gambar</h4>
-            <img id="previewImage" alt="Preview batik">
+        <div class="upload-section">
+            <label for="imageInput">Upload Foto Batik (Opsional)</label>
+            <label for="imageInput" class="upload-btn">Pilih Gambar</label>
+            <input type="file" name="image" id="imageInput" accept="image/*">
+
+            <div id="previewContainer" style="display:none;">
+                <h4 style="margin: 1rem 0 0.5rem; color: #1e40af; font-size: 0.95rem;">Preview Gambar</h4>
+                <img id="previewImage" alt="Preview batik">
+            </div>
         </div>
-    </div>
 
-    <p class="page-subtitle">
-        Pilih <strong>Ya</strong> atau <strong>Tidak</strong> untuk setiap kriteria dengan cepat. 
-        Sistem akan menganalisis teknik pembuatan dan menentukan kualitas batik Anda secara otomatis.
-    </p>
-    <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data">
+
         <div class="form-grid">
             <div class="form-section">
-                <h3>Teknik & Pola</h3>
+                <h3>Informasi Motif & Teknik</h3>
 
                 <div class="field">
                     <label for="motif_name">Nama Motif (opsional)</label>
                     <input type="text" id="motif_name" name="motif_name"
-                           placeholder="Contoh: Parang, Kawung, Mega Mendung">
+                           placeholder="Contoh: Parang, Kawung, Mega Mendung"
+                           value="{{ form_data.motif_name if form_data else '' }}">
                 </div>
 
                 <div class="field">
                     <label>Pola berulang sangat teratur?</label>
-                    <div class="toggle-group">
-                        <input type="radio" id="pattern_repeated_yes" name="pattern_repeated" value="yes">
-                        <label for="pattern_repeated_yes" class="toggle-label">Ya</label>
+                    <div class="radio-group">
+                        <input type="radio" id="pattern_repeated_yes" name="pattern_repeated" value="yes"
+                               {% if form_data and form_data.pattern_repeated == 'yes' %}checked{% endif %}>
+                        <label for="pattern_repeated_yes" class="radio-label">Ya</label>
                         
-                        <input type="radio" id="pattern_repeated_no" name="pattern_repeated" value="no" checked>
-                        <label for="pattern_repeated_no" class="toggle-label">Tidak</label>
+                        <input type="radio" id="pattern_repeated_no" name="pattern_repeated" value="no"
+                               {% if not form_data or form_data.pattern_repeated == 'no' %}checked{% endif %}>
+                        <label for="pattern_repeated_no" class="radio-label">Tidak</label>
                     </div>
                 </div>
 
                 <div class="field">
                     <label>Goresan tidak simetris / bervariasi?</label>
-                    <div class="toggle-group">
-                        <input type="radio" id="strokes_irregular_yes" name="strokes_irregular" value="yes">
-                        <label for="strokes_irregular_yes" class="toggle-label">Ya</label>
+                    <div class="radio-group">
+                        <input type="radio" id="strokes_irregular_yes" name="strokes_irregular" value="yes"
+                               {% if form_data and form_data.strokes_irregular == 'yes' %}checked{% endif %}>
+                        <label for="strokes_irregular_yes" class="radio-label">Ya</label>
                         
-                        <input type="radio" id="strokes_irregular_no" name="strokes_irregular" value="no" checked>
-                        <label for="strokes_irregular_no" class="toggle-label">Tidak</label>
+                        <input type="radio" id="strokes_irregular_no" name="strokes_irregular" value="no"
+                               {% if not form_data or form_data.strokes_irregular == 'no' %}checked{% endif %}>
+                        <label for="strokes_irregular_no" class="radio-label">Tidak</label>
                     </div>
                 </div>
 
                 <div class="field">
                     <label>Malam (wax) terlihat jelas?</label>
-                    <div class="toggle-group">
-                        <input type="radio" id="wax_visible_yes" name="wax_visible" value="yes">
-                        <label for="wax_visible_yes" class="toggle-label">Ya</label>
+                    <div class="radio-group">
+                        <input type="radio" id="wax_visible_yes" name="wax_visible" value="yes"
+                               {% if form_data and form_data.wax_visible == 'yes' %}checked{% endif %}>
+                        <label for="wax_visible_yes" class="radio-label">Ya</label>
                         
-                        <input type="radio" id="wax_visible_no" name="wax_visible" value="no" checked>
-                        <label for="wax_visible_no" class="toggle-label">Tidak</label>
+                        <input type="radio" id="wax_visible_no" name="wax_visible" value="no"
+                               {% if not form_data or form_data.wax_visible == 'no' %}checked{% endif %}>
+                        <label for="wax_visible_no" class="radio-label">Tidak</label>
                     </div>
                 </div>
 
                 <div class="field">
                     <label>Pola seragam seperti cetakan mesin?</label>
-                    <div class="toggle-group">
-                        <input type="radio" id="machine_like_yes" name="machine_like" value="yes">
-                        <label for="machine_like_yes" class="toggle-label">Ya</label>
+                    <div class="radio-group">
+                        <input type="radio" id="machine_like_yes" name="machine_like" value="yes"
+                               {% if form_data and form_data.machine_like == 'yes' %}checked{% endif %}>
+                        <label for="machine_like_yes" class="radio-label">Ya</label>
                         
-                        <input type="radio" id="machine_like_no" name="machine_like" value="no" checked>
-                        <label for="machine_like_no" class="toggle-label">Tidak</label>
+                        <input type="radio" id="machine_like_no" name="machine_like" value="no"
+                               {% if not form_data or form_data.machine_like == 'no' %}checked{% endif %}>
+                        <label for="machine_like_no" class="radio-label">Tidak</label>
                     </div>
                 </div>
             </div>
@@ -80,59 +91,70 @@
 
                 <div class="field">
                     <label>Warna tajam / cerah?</label>
-                    <div class="toggle-group">
-                        <input type="radio" id="color_sharp_yes" name="color_sharp" value="yes">
-                        <label for="color_sharp_yes" class="toggle-label">Ya</label>
+                    <div class="radio-group">
+                        <input type="radio" id="color_sharp_yes" name="color_sharp" value="yes"
+                               {% if form_data and form_data.color_sharp == 'yes' %}checked{% endif %}>
+                        <label for="color_sharp_yes" class="radio-label">Ya</label>
                         
-                        <input type="radio" id="color_sharp_no" name="color_sharp" value="no" checked>
-                        <label for="color_sharp_no" class="toggle-label">Tidak</label>
+                        <input type="radio" id="color_sharp_no" name="color_sharp" value="no"
+                               {% if not form_data or form_data.color_sharp == 'no' %}checked{% endif %}>
+                        <label for="color_sharp_no" class="radio-label">Tidak</label>
                     </div>
                 </div>
 
                 <div class="field">
-                    <label>Warna pudar?</label>
-                    <div class="toggle-group">
-                        <input type="radio" id="color_faded_yes" name="color_faded" value="yes">
-                        <label for="color_faded_yes" class="toggle-label">Ya</label>
+                    <label>Warna terlihat pudar?</label>
+                    <div class="radio-group">
+                        <input type="radio" id="color_faded_yes" name="color_faded" value="yes"
+                               {% if form_data and form_data.color_faded == 'yes' %}checked{% endif %}>
+                        <label for="color_faded_yes" class="radio-label">Ya</label>
                         
-                        <input type="radio" id="color_faded_no" name="color_faded" value="no" checked>
-                        <label for="color_faded_no" class="toggle-label">Tidak</label>
+                        <input type="radio" id="color_faded_no" name="color_faded" value="no"
+                               {% if not form_data or form_data.color_faded == 'no' %}checked{% endif %}>
+                        <label for="color_faded_no" class="radio-label">Tidak</label>
                     </div>
                 </div>
 
                 <div class="field">
-                    <label for="defect_count">Jumlah cacat motif</label>
-                    <input type="number" id="defect_count" name="defect_count" min="0" value="0" 
+                    <label for="defect_count">Jumlah cacat motif (perkiraan)</label>
+                    <input type="number" id="defect_count" name="defect_count" min="0"
+                           value="{{ form_data.defect_count if form_data else 0 }}"
                            placeholder="Masukkan angka">
                 </div>
 
                 <div class="field">
-                    <label>Kain terasa halus?</label>
-                    <div class="toggle-group">
-                        <input type="radio" id="fabric_smooth_yes" name="fabric_smooth" value="yes">
-                        <label for="fabric_smooth_yes" class="toggle-label">Ya</label>
+                    <label>Kain terasa halus saat diraba?</label>
+                    <div class="radio-group">
+                        <input type="radio" id="fabric_smooth_yes" name="fabric_smooth" value="yes"
+                               {% if form_data and form_data.fabric_smooth == 'yes' %}checked{% endif %}>
+                        <label for="fabric_smooth_yes" class="radio-label">Ya</label>
                         
-                        <input type="radio" id="fabric_smooth_no" name="fabric_smooth" value="no" checked>
-                        <label for="fabric_smooth_no" class="toggle-label">Tidak</label>
+                        <input type="radio" id="fabric_smooth_no" name="fabric_smooth" value="no"
+                               {% if not form_data or form_data.fabric_smooth == 'no' %}checked{% endif %}>
+                        <label for="fabric_smooth_no" class="radio-label">Tidak</label>
                     </div>
                 </div>
             </div>
         </div>
 
-        <button type="submit" class="btn-primary">Analisis</button>
-    </form>
-</div>
+            <button type="submit" class="btn-primary">Klasifikasikan</button>
+        </form>
+    </div>
 
-{% if result %}
-<div class="result-card">
-    <h3>Hasil Klasifikasi</h3>
+    <div>
+        {% if result %}
+        <div class="result-card" id="resultSection">
+    <h3>Hasil Klasifikasi Batik</h3>
 
     {% if result.image_url %}
-        <h4>📷 Foto Referensi</h4>
-        <img src="{{ result.image_url }}" class="result-image" alt="Foto batik yang dianalisis">
+        <h4>Foto Referensi</h4>
+        <img src="{{ result.image_url }}"
+             alt="Foto batik yang dianalisis"
+             class="result-image">
     {% endif %}
 
-    <p><strong>Teknik Pembuatan:</strong>
+    <p>
+        <strong>Teknik Pembuatan:</strong>
         <span class="badge badge-tech">{{ result.technique }}</span>
     </p>
 
@@ -145,15 +167,51 @@
         {% else %}
             <span class="badge badge-standard">{{ result.quality }}</span>
         {% endif %}
+        {% if result.defect_count is not none %}
+            <span style="font-size:0.85rem; color:#6b7280; margin-left:0.5rem;">
+                (Jumlah cacat: {{ result.defect_count }})
+            </span>
+        {% endif %}
     </p>
 
     <p><strong>Motif:</strong> {{ result.motif_name }}</p>
 
-    <h4>Analisis Teknik</h4>
-    <p style="font-size:0.95rem; color:#374151; line-height:1.7;">{{ result.exp_tech }}</p>
+    <h4>Analisis Penentuan Teknik</h4>
+    <ul>
+        {% for e in result.exp_tech %}
+            <li>{{ e }}</li>
+        {% endfor %}
+    </ul>
 
-    <h4>Analisis Kualitas</h4>
-    <p style="font-size:0.95rem; color:#374151; line-height:1.7;">{{ result.exp_qual }}</p>
+    <h4>Analisis Penentuan Kualitas</h4>
+    <ul>
+        {% for e in result.exp_qual %}
+            <li>{{ e }}</li>
+        {% endfor %}
+    </ul>
 </div>
 {% endif %}
+
+<script>
+// Preview gambar saat dipilih
+document.getElementById("imageInput").addEventListener("change", function(event) {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById("previewContainer");
+    const previewImage = document.getElementById("previewImage");
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewContainer.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewContainer.style.display = "none";
+        previewImage.src = "";
+    }
+});
+
+// Tidak perlu scroll lagi karena hasil sudah di samping
+</script>
 {% endblock %}
