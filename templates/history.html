@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+  <h1 style="color: #1f2937; margin-bottom: 0.5rem; font-size: 2.5rem;">
+    <i class="fas fa-history"></i> Riwayat Klasifikasi
+  </h1>
+
+<header>
+  <a href="{{ url_for('index') }}">Home</a>
+  <a href="{{ url_for('history') }}">History</a>
+  <a href="{{ url_for('rules_page') }}">Rules</a>
+</header>
+  <p class="muted" style="font-size: 1.1rem;">Rekaman hasil klasifikasi batik (terbaru ke lama)</p>
+</div>
+
+{% if records %}
+  <div style="margin-bottom: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%); border-radius: 12px; text-align: center;">
+    <strong style="color: #667eea; font-size: 1.1rem;">
+      <i class="fas fa-database"></i> Total: {{ records|length }} rekaman
+    </strong>
+  </div>
+
+  <div style="overflow-x: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+    <table style="background: white;">
+      <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <tr>
+          <th style="padding: 1rem;"><i class="fas fa-calendar"></i> Tanggal</th>
+          <th><i class="fas fa-tag"></i> Motif</th>
+          <th><i class="fas fa-hand-sparkles"></i> Teknik</th>
+          <th><i class="fas fa-gem"></i> Kualitas</th>
+          <th><i class="fas fa-image"></i> Gambar</th>
+          <th><i class="fas fa-list"></i> Input</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+          <tr style="transition: all 0.3s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+            <td style="padding: 1rem; white-space: nowrap;">
+              <div style="font-weight: 600; color: #374151;">{{ r.created_at.strftime('%d %b %Y') }}</div>
+              <div style="font-size: 0.85rem; color: #9ca3af;">{{ r.created_at.strftime('%H:%M') }}</div>
+            </td>
+            <td style="font-weight: 600; color: #667eea;">{{ r.motif_name or '-' }}</td>
+            <td>
+              <span style="padding: 0.4rem 0.8rem; background: #e0e7ff; color: #3730a3; border-radius: 8px; font-weight: 600; font-size: 0.9rem;">
+                {{ r.technique }}
+              </span>
+            </td>
+            <td>
+              {% if r.quality == 'Premium' %}
+                <span style="padding: 0.4rem 0.8rem; background: #dcfce7; color: #14532d; border-radius: 8px; font-weight: 700; font-size: 0.9rem;">
+                  <i class="fas fa-crown"></i> Premium
+                </span>
+              {% elif r.quality == 'Reject' %}
+                <span style="padding: 0.4rem 0.8rem; background: #fee2e2; color: #7f1d1d; border-radius: 8px; font-weight: 700; font-size: 0.9rem;">
+                  <i class="fas fa-times-circle"></i> Reject
+                </span>
+              {% else %}
+                <span style="padding: 0.4rem 0.8rem; background: #fef3c7; color: #78350f; border-radius: 8px; font-weight: 700; font-size: 0.9rem;">
+                  <i class="fas fa-star"></i> Standard
+                </span>
+              {% endif %}
+            </td>
+            <td style="text-align: center;">
+              {% if r.image_path %}
+                <img src="{{ r.image_path }}" style="max-width:100px; max-height: 80px; border-radius:8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer;" onclick="openImageModal('{{ r.image_path }}')"/>
+              {% else %}
+                <span style="color: #9ca3af;">-</span>
+              {% endif %}
+            </td>
+            <td>
+              <details style="cursor: pointer;">
+                <summary style="color: #667eea; font-weight: 600; font-size: 0.9rem;">
+                  <i class="fas fa-chevron-down"></i> Lihat detail
+                </summary>
+                <div style="margin-top: 0.5rem; padding: 0.8rem; background: #f9fafb; border-radius: 8px; font-size: 0.85rem;">
+                  {% for k, v in r.inputs_parsed.items() %}
+                    <div style="margin: 0.3rem 0;">
+                      <strong style="color: #374151;">{{ k }}:</strong> 
+                      <span style="color: #6b7280;">{{ v }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              </details>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div style="text-align: center; padding: 3rem; background: #f9fafb; border-radius: 12px; border: 2px dashed #d1d5db;">
+    <i class="fas fa-inbox" style="font-size: 4rem; color: #d1d5db; margin-bottom: 1rem;"></i>
+    <h3 style="color: #6b7280;">Belum ada riwayat klasifikasi</h3>
+    <p class="muted">Mulai klasifikasi batik pertama Anda!</p>
+    <a href="{{ url_for('index') }}" style="display: inline-block; margin-top: 1rem; padding: 0.8rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+      <i class="fas fa-plus-circle"></i> Mulai Klasifikasi
+    </a>
+  </div>
+{% endif %}
+
+<!-- Image Modal -->
+<div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;" onclick="closeImageModal()">
+  <div style="position: relative; max-width: 90%; max-height: 90%;">
+    <img id="modalImage" src="" style="max-width: 100%; max-height: 90vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+    <button onclick="closeImageModal()" style="position: absolute; top: -15px; right: -15px; background: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</div>
+
+<script>
+function openImageModal(src) {
+  document.getElementById('modalImage').src = src;
+  document.getElementById('imageModal').style.display = 'flex';
+}
+
+function closeImageModal() {
+  document.getElementById('imageModal').style.display = 'none';
+}
+</script>
+{% endblock %}

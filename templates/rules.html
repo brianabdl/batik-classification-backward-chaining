@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+  <h1 style="color: #1f2937; margin-bottom: 0.5rem; font-size: 2.5rem;">
+    <i class="fas fa-cogs"></i> Manajemen Rules
+  </h1>
+
+<header>
+  <a href="{{ url_for('index') }}">Home</a>
+  <a href="{{ url_for('history') }}">History</a>
+  <a href="{{ url_for('rules_page') }}">Rules</a>
+</header>
+  <p class="muted" style="font-size: 1.1rem;">Kelola aturan backward chaining untuk klasifikasi batik</p>
+</div>
+
+<!-- Technique Rules Section -->
+<div class="section-card" style="margin-bottom: 2rem;">
+  <div class="section-header">
+    <i class="fas fa-hand-sparkles"></i>
+    <h2 style="margin: 0; color: #1f2937;">Rules Teknik Batik</h2>
+    <span style="margin-left: auto; padding: 0.3rem 0.8rem; background: #e0e7ff; color: #3730a3; border-radius: 999px; font-weight: 700; font-size: 0.9rem;">
+      {{ tech_rules|length }} rules
+    </span>
+  </div>
+  
+  <div style="overflow-x: auto; margin-top: 1rem;">
+    <table style="width: 100%;">
+      <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <tr>
+          <th style="padding: 0.8rem;"><i class="fas fa-sort-numeric-down"></i> Priority</th>
+          <th><i class="fas fa-code"></i> Conditions</th>
+          <th><i class="fas fa-flag-checkered"></i> Conclusion</th>
+          <th><i class="fas fa-comment-dots"></i> Explanation</th>
+          <th style="text-align: center;"><i class="fas fa-trash"></i> Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in tech_rules %}
+          <tr style="transition: all 0.3s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+            <td style="padding: 0.8rem; text-align: center;">
+              <span style="display: inline-block; width: 40px; height: 40px; line-height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 50%; font-weight: 700;">
+                {{ r.priority }}
+              </span>
+            </td>
+            <td style="max-width: 300px;">
+              <pre style="white-space:pre-wrap; background: #f9fafb; padding: 0.8rem; border-radius: 8px; font-size: 0.85rem; margin: 0; border-left: 3px solid #667eea;">{{ r.conditions | tojson(indent=2) }}</pre>
+            </td>
+            <td>
+              <span style="padding: 0.4rem 0.9rem; background: #e0e7ff; color: #3730a3; border-radius: 8px; font-weight: 700; font-size: 0.9rem;">
+                {{ r.conclusion }}
+              </span>
+            </td>
+            <td style="max-width: 250px;">
+              <pre style="white-space:pre-wrap; background: #fef3c7; padding: 0.8rem; border-radius: 8px; font-size: 0.85rem; margin: 0; border-left: 3px solid #f59e0b;">{{ r.explanation | tojson(indent=2) }}</pre>
+            </td>
+            <td style="text-align: center;">
+              <form method="post" action="{{ url_for('delete_rule', rule_id=r.id) }}" style="display:inline;" onsubmit="return confirm('Yakin ingin menghapus rule ini?');">
+                <button type="submit" style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                  <i class="fas fa-trash"></i> Hapus
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Quality Rules Section -->
+<div class="section-card" style="margin-bottom: 2rem;">
+  <div class="section-header">
+    <i class="fas fa-gem"></i>
+    <h2 style="margin: 0; color: #1f2937;">Rules Kualitas Batik</h2>
+    <span style="margin-left: auto; padding: 0.3rem 0.8rem; background: #dcfce7; color: #14532d; border-radius: 999px; font-weight: 700; font-size: 0.9rem;">
+      {{ qual_rules|length }} rules
+    </span>
+  </div>
+  
+  <div style="overflow-x: auto; margin-top: 1rem;">
+    <table style="width: 100%;">
+      <thead style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+        <tr>
+          <th style="padding: 0.8rem;"><i class="fas fa-sort-numeric-down"></i> Priority</th>
+          <th><i class="fas fa-code"></i> Conditions</th>
+          <th><i class="fas fa-flag-checkered"></i> Conclusion</th>
+          <th><i class="fas fa-comment-dots"></i> Explanation</th>
+          <th style="text-align: center;"><i class="fas fa-trash"></i> Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in qual_rules %}
+          <tr style="transition: all 0.3s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+            <td style="padding: 0.8rem; text-align: center;">
+              <span style="display: inline-block; width: 40px; height: 40px; line-height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 50%; font-weight: 700;">
+                {{ r.priority }}
+              </span>
+            </td>
+            <td style="max-width: 300px;">
+              <pre style="white-space:pre-wrap; background: #f9fafb; padding: 0.8rem; border-radius: 8px; font-size: 0.85rem; margin: 0; border-left: 3px solid #10b981;">{{ r.conditions | tojson(indent=2) }}</pre>
+            </td>
+            <td>
+              {% if r.conclusion == 'Premium' %}
+                <span style="padding: 0.4rem 0.9rem; background: #dcfce7; color: #14532d; border-radius: 8px; font-weight: 700; font-size: 0.9rem;">
+                  <i class="fas fa-crown"></i> {{ r.conclusion }}
+                </span>
+              {% elif r.conclusion == 'Reject' %}
+                <span style="padding: 0.4rem 0.9rem; background: #fee2e2; color: #7f1d1d; border-radius: 8px; font-weight: 700; font-size: 0.9rem;">
+                  <i class="fas fa-times-circle"></i> {{ r.conclusion }}
+                </span>
+              {% else %}
+                <span style="padding: 0.4rem 0.9rem; background: #fef3c7; color: #78350f; border-radius: 8px; font-weight: 700; font-size: 0.9rem;">
+                  <i class="fas fa-star"></i> {{ r.conclusion }}
+                </span>
+              {% endif %}
+            </td>
+            <td style="max-width: 250px;">
+              <pre style="white-space:pre-wrap; background: #fef3c7; padding: 0.8rem; border-radius: 8px; font-size: 0.85rem; margin: 0; border-left: 3px solid #f59e0b;">{{ r.explanation | tojson(indent=2) }}</pre>
+            </td>
+            <td style="text-align: center;">
+              <form method="post" action="{{ url_for('delete_rule', rule_id=r.id) }}" style="display:inline;" onsubmit="return confirm('Yakin ingin menghapus rule ini?');">
+                <button type="submit" style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                  <i class="fas fa-trash"></i> Hapus
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add New Rule Section -->
+<div class="section-card" style="background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%); border: 2px solid #667eea;">
+  <div class="section-header">
+    <i class="fas fa-plus-circle"></i>
+    <h2 style="margin: 0; color: #1f2937;">Tambah Rule Baru</h2>
+  </div>
+  
+  <form method="post" style="margin-top: 1.5rem;">
+    <div class="grid" style="gap: 1.5rem;">
+      <div>
+        <label><i class="fas fa-tag"></i> Tipe Rule</label>
+        <select name="rule_type" style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 2px solid #e5e7eb; font-size: 1rem; background: white;">
+          <option value="technique">🎨 Technique (Teknik)</option>
+          <option value="quality">💎 Quality (Kualitas)</option>
+        </select>
+      </div>
+
+      <div>
+        <label><i class="fas fa-sort-numeric-down"></i> Priority (semakin kecil, semakin awal dicek)</label>
+        <input type="number" name="priority" value="50" min="1" max="999" style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 2px solid #e5e7eb; font-size: 1rem;">
+      </div>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+      <label><i class="fas fa-code"></i> Conditions (Format JSON)</label>
+      <textarea name="conditions" rows="5" placeholder='{"strokes_irregular": true, "wax_visible": true, "pattern_repeated": false}' style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 2px solid #e5e7eb; font-family: monospace; font-size: 0.95rem;"></textarea>
+      <small class="muted" style="display: block; margin-top: 0.5rem;">
+        <i class="fas fa-info-circle"></i> Contoh: {"color_sharp": true, "defect_count": "lte:1"}
+      </small>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+      <label><i class="fas fa-flag-checkered"></i> Conclusion (Kesimpulan)</label>
+      <input type="text" name="conclusion" placeholder="Contoh: Batik Tulis, Premium, Standard" required style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 2px solid #e5e7eb; font-size: 1rem;">
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+      <label><i class="fas fa-comment-dots"></i> Explanation (Format JSON array atau string)</label>
+      <textarea name="explanation" rows="4" placeholder='["Alasan 1", "Alasan 2", "Alasan 3"]' style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 2px solid #e5e7eb; font-family: monospace; font-size: 0.95rem;"></textarea>
+      <small class="muted" style="display: block; margin-top: 0.5rem;">
+        <i class="fas fa-info-circle"></i> Contoh: ["Warna tajam dan cerah", "Kain halus berkualitas tinggi"]
+      </small>
+    </div>
+
+    <div style="margin-top: 1.5rem; text-align: center;">
+      <button class="btn" type="submit" style="padding: 0.85rem 2.5rem; font-size: 1.1rem;">
+        <i class="fas fa-plus-circle"></i> Tambah Rule
+      </button>
+    </div>
+  </form>
+</div>
+
+<style>
+select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+}
+</style>
+{% endblock %}

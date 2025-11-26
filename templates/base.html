@@ -1,353 +1,83 @@
 <!doctype html>
-<html lang="id">
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Sistem Pakar Batik – Backward Chaining</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        main {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            align-items: start;
-        }
-        .form-container {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 2rem;
-            position: sticky;
-            top: 2rem;
-        }
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin: 0 0 0.5rem 0;
-        }
-        .page-subtitle {
-            font-size: 0.9rem;
-            color: #6b7280;
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
-        }
-        .upload-section {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border: 2px dashed #3b82f6;
-            border-radius: 0.75rem;
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        .upload-section:hover {
-            border-color: #2563eb;
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            transform: translateY(-2px);
-        }
-        .upload-section > label:first-of-type {
-            display: block;
-            font-weight: 600;
-            color: #1e40af;
-            margin-bottom: 0.75rem;
-            font-size: 0.95rem;
-        }
-        input[type="file"] {
-            display: none;
-        }
-        .upload-btn {
-            display: inline-block;
-            padding: 0.6rem 1.25rem;
-            background: #3b82f6;
-            color: white;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            font-size: 0.9rem;
-        }
-        .upload-btn:hover {
-            background: #2563eb;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        }
-        #previewContainer {
-            margin-top: 1rem;
-        }
-        #previewImage {
-            max-width: 200px;
-            border-radius: 0.75rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .form-section {
-            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-            padding: 1.25rem;
-            border-radius: 0.75rem;
-            border: 1px solid #e5e7eb;
-            transition: all 0.2s ease;
-        }
-        .form-section:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        .form-section h3 {
-            margin: 0 0 1rem 0;
-            font-size: 1.1rem;
-            color: #1f2937;
-            padding-bottom: 0.6rem;
-            border-bottom: 3px solid #3b82f6;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .field {
-            margin-bottom: 1rem;
-        }
-        .field > label:first-child {
-            display: block;
-            font-size: 0.9rem;
-            margin-bottom: 0.6rem;
-            font-weight: 600;
-            color: #374151;
-        }
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 0.65rem;
-            border-radius: 0.5rem;
-            border: 2px solid #e5e7eb;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-        input[type="text"]:focus, input[type="number"]:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        /* Toggle Switch Styling untuk Radio Buttons */
-        .radio-group {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-        input[type="radio"] {
-            display: none;
-        }
-        .radio-label {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.5rem 1rem;
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            font-size: 0.9rem;
-            flex: 1;
-            justify-content: center;
-        }
-        .radio-label:hover {
-            border-color: #3b82f6;
-            background: #f0f9ff;
-            transform: translateY(-2px);
-        }
-        input[type="radio"]:checked + .radio-label {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            border-color: #2563eb;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-            transform: translateY(-2px);
-        }
-        .radio-label::before {
-            content: '';
-            width: 16px;
-            height: 16px;
-            border: 2px solid currentColor;
-            border-radius: 50%;
-            display: inline-block;
-            transition: all 0.2s ease;
-        }
-        input[type="radio"]:checked + .radio-label::before {
-            background: white;
-            border-color: white;
-            box-shadow: inset 0 0 0 3px #3b82f6;
-        }
-        .btn-primary {
-            width: 100%;
-            margin-top: 1rem;
-            padding: 0.85rem 2rem;
-            border-radius: 0.75rem;
-            border: none;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-weight: 700;
-            font-size: 1.05rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
-        }
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-        .result-card {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 2rem;
-            animation: slideIn 0.5s ease;
-            position: sticky;
-            top: 2rem;
-        }
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        .result-card h3 {
-            margin: 0 0 1.25rem 0;
-            font-size: 1.5rem;
-            color: #1f2937;
-            border-bottom: 3px solid #3b82f6;
-            padding-bottom: 0.65rem;
-        }
-        .result-card h4 {
-            margin: 1.25rem 0 0.65rem 0;
-            font-size: 1.05rem;
-            color: #374151;
-        }
-        .result-card p {
-            margin: 0.65rem 0;
-            line-height: 1.7;
-            font-size: 0.95rem;
-        }
-        .badge {
-            display: inline-block;
-            padding: 0.4rem 0.95rem;
-            border-radius: 999px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .badge-tech {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            color: #1e40af;
-        }
-        .badge-premium {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            color: #065f46;
-        }
-        .badge-standard {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #92400e;
-        }
-        .badge-reject {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            color: #991b1b;
-        }
-        .result-image {
-            max-width: 100%;
-            border-radius: 0.75rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            margin: 1rem 0;
-        }
-        footer {
-            text-align: center;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.9);
-            margin: 2rem 0;
-            padding: 1rem;
-        }
-        ul {
-            padding-left: 1.5rem;
-            margin: 0.5rem 0 1rem;
-        }
-        ul li {
-            font-size: 0.9rem;
-            color: #374151;
-            line-height: 1.7;
-            margin-bottom: 0.4rem;
-        }
-        .empty-result {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 1rem;
-            padding: 3rem 2rem;
-            text-align: center;
-            color: white;
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-        }
-        .empty-result h3 {
-            font-size: 1.3rem;
-            margin: 0 0 0.5rem 0;
-        }
-        .empty-result p {
-            font-size: 0.95rem;
-            opacity: 0.9;
-            margin: 0;
-        }
-        @media (max-width: 1100px) {
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
-            .form-container, .result-card {
-                position: static;
-            }
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        @media (max-width: 768px) {
-            main {
-                padding: 0 0.5rem;
-            }
-            .form-container, .result-card {
-                padding: 1.5rem;
-            }
-            .radio-group {
-                flex-direction: column;
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <title>Batik Expert System (DB)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin:0; background: #667eea; min-height:100vh; }
+    /* header { backdrop-filter: blur(10px); color:white; padding:1.2rem 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100; } */
+    header a { color: black; margin-right:1.5rem; text-decoration:none; font-weight:600; transition: all 0.3s; display: inline-block; }
+    header a:hover { color: #6b7280; }
+    main { max-width:1200px; margin:2rem auto; background: white; padding:2rem; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.15); }
+    label { font-weight:600; display:block; margin:0.5rem 0 0.3rem; color: #374151; }
+    input[type="text"], input[type="number"], input[type="file"], textarea { width:100%; padding:0.75rem 1rem; border-radius:8px; border:2px solid #e5e7eb; transition: all 0.3s; font-size: 1rem; }
+    input[type="text"]:focus, input[type="number"]:focus, textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+    .btn { background: #764ba2; color:white; padding:0.85rem 2rem; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:1.05rem; transition: all 0.3s; box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+    .btn:active { transform: translateY(0); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:1.5rem; }
+    .result { border-left:4px solid #667eea; padding:1.5rem; background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%); margin-top:1.5rem; border-radius:12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
+    table { width:100%; border-collapse:collapse; margin-top:0.8rem; }
+    th, td { padding:0.7rem 0.8rem; border-bottom:1px solid #e5e7eb; text-align:left; }
+    th { background: #f9fafb; font-weight: 700; color: #374151; }
+    .badge { padding:0.3rem 0.8rem; border-radius:999px; font-weight:700; font-size:0.85rem; }
+    .success { background:#dcfce7; color:#14532d; }
+    .danger { background:#fee2e2; color:#7f1d1d; }
+    footer { text-align:center; color:#e0e7ff; margin-top:2rem; padding: 1.5rem; font-size:0.9rem; }
+    .flash { padding:0.8rem 1.2rem; border-radius:8px; margin-bottom:0.8rem; }
+    .muted { color:#6b7280; font-size:0.95rem; }
+    
+    /* Toggle Switch Styles */
+    .toggle-group { display: flex; align-items: center; gap: 0.8rem; margin: 0.8rem 0; padding: 0.8rem 1rem; background: #f9fafb; border-radius: 10px; transition: all 0.3s; }
+    .toggle-group:hover { background: #f3f4f6; }
+    .toggle-label { flex: 1; font-weight: 500; color: #374151; font-size: 0.95rem; }
+    .toggle-switch { position: relative; display: inline-block; width: 56px; height: 28px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; border-radius: 28px; transition: .3s; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; border-radius: 50%; transition: .3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    input:checked + .slider { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    input:checked + .slider:before { transform: translateX(28px); }
+    
+    /* Section Cards */
+    .section-card { background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; transition: all 0.3s; }
+    .section-card:hover { border-color: #667eea; box-shadow: 0 4px 12px rgba(102,126,234,0.1); }
+    .section-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; color: #667eea; }
+    .section-header i { font-size: 1.5rem; }
+    .section-header h3 { margin: 0; font-size: 1.2rem; color: #1f2937; }
+    
+    /* Quick Preset Buttons */
+    .preset-buttons { display: flex; gap: 0.8rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .preset-btn { padding: 0.5rem 1rem; border-radius: 8px; border: 2px solid #e5e7eb; background: white; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem; }
+    .preset-btn:hover { border-color: #667eea; color: #667eea; transform: translateY(-2px); }
+    .preset-btn.active { background: #667eea; color: white; border-color: #667eea; }
+    
+    /* Number Input with Icons */
+    .input-with-icon { position: relative; }
+    .input-with-icon i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #9ca3af; }
+    .input-with-icon input { padding-left: 2.8rem; }
+    
+    /* Image Upload Area */
+    .upload-area { border: 3px dashed #d1d5db; border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s; background: #fafafa; }
+    .upload-area:hover { border-color: #667eea; background: #f0f4ff; }
+    .upload-area i { font-size: 3rem; color: #9ca3af; margin-bottom: 1rem; }
+  </style>
 </head>
 <body>
 <main>
-    {% block content %}{% endblock %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="flash" style="background:#fff4e6; border-left:4px solid #f59e0b;">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
 </main>
 <footer>
-    Demo sistem pakar batik berbasis aturan & backward chaining.
+  Batik Expert System — Backward Chaining with persistent storage (SQLite)
 </footer>
 </body>
 </html>

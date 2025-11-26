@@ -1,217 +1,340 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="main-grid">
-    <div class="form-container">
-        <h2 class="page-title">Sistem Pakar Klasifikasi Batik</h2>
-        <p class="page-subtitle">
-            Upload foto batik sebagai referensi (opsional), lalu pilih <strong>Ya</strong> atau <strong>Tidak</strong> untuk setiap karakteristik.
-            Sistem akan menganalisis <strong>teknik pembuatan</strong> dan <strong>kualitas produk</strong> menggunakan metode backward chaining.
-        </p>
+<div style="text-align: center; margin-bottom: 2rem;">
+  <h1 style="color: #1f2937; margin-bottom: 0.5rem; font-size: 2.5rem;">
+    <i class="fas fa-palette"></i> Sistem Klasifikasi Batik
+  </h1>
+  
+<header>
+  <a href="{{ url_for('index') }}">Home</a>
+  <a href="{{ url_for('history') }}">History</a>
+  <a href="{{ url_for('rules_page') }}">Rules</a>
+</header>
+  <p class="muted" style="font-size: 1.1rem;">Klasifikasi teknik dan kualitas batik dengan backward chaining</p>
+</div>
 
-        <div class="upload-section">
-            <label for="imageInput">Upload Foto Batik (Opsional)</label>
-            <label for="imageInput" class="upload-btn">Pilih Gambar</label>
-            <input type="file" name="image" id="imageInput" accept="image/*">
+<!-- Quick Presets -->
+<div class="preset-buttons">
+  <button type="button" class="preset-btn" onclick="applyPreset('tulis')">
+    <i class="fas fa-hand-sparkles"></i> Batik Tulis
+  </button>
+  <button type="button" class="preset-btn" onclick="applyPreset('cap')">
+    <i class="fas fa-stamp"></i> Batik Cap
+  </button>
+  <button type="button" class="preset-btn" onclick="applyPreset('print')">
+    <i class="fas fa-print"></i> Batik Print
+  </button>
+  <button type="button" class="preset-btn" onclick="resetForm()">
+    <i class="fas fa-redo"></i> Reset
+  </button>
+</div>
 
-            <div id="previewContainer" style="display:none;">
-                <h4 style="margin: 1rem 0 0.5rem; color: #1e40af; font-size: 0.95rem;">Preview Gambar</h4>
-                <img id="previewImage" alt="Preview batik">
-            </div>
-        </div>
+<form method="post" enctype="multipart/form-data" id="classifyForm">
+  <!-- Image Upload Section -->
+  <div class="section-card">
+    <div class="section-header">
+      <i class="fas fa-image"></i>
+      <h3>Upload Gambar Batik (Opsional)</h3>
+    </div>
+    <label for="imageInput" class="upload-area" id="uploadArea">
+      <i class="fas fa-cloud-upload-alt"></i>
+      <div><strong>Klik untuk upload gambar</strong> atau drag & drop</div>
+      <div class="muted" style="margin-top: 0.5rem;">PNG, JPG, JPEG, atau GIF</div>
+    </label>
+    <input type="file" id="imageInput" name="image" accept="image/*" style="display: none;">
+    <div id="preview" style="display:none; margin-top:1rem; text-align: center;">
+      <img id="previewImage" src="" style="max-width:100%; max-height: 300px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.15); display: block; margin: 0 auto;">
+      <button type="button" onclick="clearImage()" style="margin-top: 1rem; padding: 0.6rem 1.2rem; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; box-shadow: 0 2px 8px rgba(239,68,68,0.3);" onmouseover="this.style.background='#dc2626'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(239,68,68,0.4)';" onmouseout="this.style.background='#ef4444'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(239,68,68,0.3)';">
+        <i class="fas fa-times"></i> Hapus Gambar
+      </button>
+    </div>
+  </div>
 
-        <form method="post" enctype="multipart/form-data">
+  <!-- Basic Info Section -->
+  <div class="section-card">
+    <div class="section-header">
+      <i class="fas fa-info-circle"></i>
+      <h3>Informasi Dasar</h3>
+    </div>
+    <label for="motif_name"><i class="fas fa-tag"></i> Nama Motif (Opsional)</label>
+    <input type="text" id="motif_name" name="motif_name" placeholder="Contoh: Parang, Kawung, Mega Mendung">
+  </div>
 
-        <div class="form-grid">
-            <div class="form-section">
-                <h3>Informasi Motif & Teknik</h3>
-
-                <div class="field">
-                    <label for="motif_name">Nama Motif (opsional)</label>
-                    <input type="text" id="motif_name" name="motif_name"
-                           placeholder="Contoh: Parang, Kawung, Mega Mendung"
-                           value="{{ form_data.motif_name if form_data else '' }}">
-                </div>
-
-                <div class="field">
-                    <label>Pola berulang sangat teratur?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="pattern_repeated_yes" name="pattern_repeated" value="yes"
-                               {% if form_data and form_data.pattern_repeated == 'yes' %}checked{% endif %}>
-                        <label for="pattern_repeated_yes" class="radio-label">Ya</label>
-                        
-                        <input type="radio" id="pattern_repeated_no" name="pattern_repeated" value="no"
-                               {% if not form_data or form_data.pattern_repeated == 'no' %}checked{% endif %}>
-                        <label for="pattern_repeated_no" class="radio-label">Tidak</label>
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label>Goresan tidak simetris / bervariasi?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="strokes_irregular_yes" name="strokes_irregular" value="yes"
-                               {% if form_data and form_data.strokes_irregular == 'yes' %}checked{% endif %}>
-                        <label for="strokes_irregular_yes" class="radio-label">Ya</label>
-                        
-                        <input type="radio" id="strokes_irregular_no" name="strokes_irregular" value="no"
-                               {% if not form_data or form_data.strokes_irregular == 'no' %}checked{% endif %}>
-                        <label for="strokes_irregular_no" class="radio-label">Tidak</label>
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label>Malam (wax) terlihat jelas?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="wax_visible_yes" name="wax_visible" value="yes"
-                               {% if form_data and form_data.wax_visible == 'yes' %}checked{% endif %}>
-                        <label for="wax_visible_yes" class="radio-label">Ya</label>
-                        
-                        <input type="radio" id="wax_visible_no" name="wax_visible" value="no"
-                               {% if not form_data or form_data.wax_visible == 'no' %}checked{% endif %}>
-                        <label for="wax_visible_no" class="radio-label">Tidak</label>
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label>Pola seragam seperti cetakan mesin?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="machine_like_yes" name="machine_like" value="yes"
-                               {% if form_data and form_data.machine_like == 'yes' %}checked{% endif %}>
-                        <label for="machine_like_yes" class="radio-label">Ya</label>
-                        
-                        <input type="radio" id="machine_like_no" name="machine_like" value="no"
-                               {% if not form_data or form_data.machine_like == 'no' %}checked{% endif %}>
-                        <label for="machine_like_no" class="radio-label">Tidak</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section">
-                <h3>Kualitas Warna & Kain</h3>
-
-                <div class="field">
-                    <label>Warna tajam / cerah?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="color_sharp_yes" name="color_sharp" value="yes"
-                               {% if form_data and form_data.color_sharp == 'yes' %}checked{% endif %}>
-                        <label for="color_sharp_yes" class="radio-label">Ya</label>
-                        
-                        <input type="radio" id="color_sharp_no" name="color_sharp" value="no"
-                               {% if not form_data or form_data.color_sharp == 'no' %}checked{% endif %}>
-                        <label for="color_sharp_no" class="radio-label">Tidak</label>
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label>Warna terlihat pudar?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="color_faded_yes" name="color_faded" value="yes"
-                               {% if form_data and form_data.color_faded == 'yes' %}checked{% endif %}>
-                        <label for="color_faded_yes" class="radio-label">Ya</label>
-                        
-                        <input type="radio" id="color_faded_no" name="color_faded" value="no"
-                               {% if not form_data or form_data.color_faded == 'no' %}checked{% endif %}>
-                        <label for="color_faded_no" class="radio-label">Tidak</label>
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label for="defect_count">Jumlah cacat motif (perkiraan)</label>
-                    <input type="number" id="defect_count" name="defect_count" min="0"
-                           value="{{ form_data.defect_count if form_data else 0 }}"
-                           placeholder="Masukkan angka">
-                </div>
-
-                <div class="field">
-                    <label>Kain terasa halus saat diraba?</label>
-                    <div class="radio-group">
-                        <input type="radio" id="fabric_smooth_yes" name="fabric_smooth" value="yes"
-                               {% if form_data and form_data.fabric_smooth == 'yes' %}checked{% endif %}>
-                        <label for="fabric_smooth_yes" class="radio-label">Ya</label>
-                        
-                        <input type="radio" id="fabric_smooth_no" name="fabric_smooth" value="no"
-                               {% if not form_data or form_data.fabric_smooth == 'no' %}checked{% endif %}>
-                        <label for="fabric_smooth_no" class="radio-label">Tidak</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-            <button type="submit" class="btn-primary">Klasifikasikan</button>
-        </form>
+  <div class="grid">
+    <!-- Pattern & Technique Section -->
+    <div class="section-card">
+      <div class="section-header">
+        <i class="fas fa-drafting-compass"></i>
+        <h3>Pola & Teknik</h3>
+      </div>
+      
+      <div class="toggle-group">
+        <span class="toggle-label">Pola berulang sangat teratur?</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="pattern_repeated" name="pattern_repeated" value="yes">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="toggle-group">
+        <span class="toggle-label">Goresan tidak simetris / bervariasi?</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="strokes_irregular" name="strokes_irregular" value="yes">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="toggle-group">
+        <span class="toggle-label">Malam (wax) terlihat jelas?</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="wax_visible" name="wax_visible" value="yes">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="toggle-group">
+        <span class="toggle-label">Pola seragam seperti cetakan mesin?</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="machine_like" name="machine_like" value="yes">
+          <span class="slider"></span>
+        </label>
+      </div>
     </div>
 
-    <div>
-        {% if result %}
-        <div class="result-card" id="resultSection">
-    <h3>Hasil Klasifikasi Batik</h3>
+    <!-- Quality Section -->
+    <div class="section-card">
+      <div class="section-header">
+        <i class="fas fa-gem"></i>
+        <h3>Kualitas</h3>
+      </div>
+      
+      <div class="toggle-group">
+        <span class="toggle-label">Warna tajam / cerah?</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="color_sharp" name="color_sharp" value="yes">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="toggle-group">
+        <span class="toggle-label">Warna pudar?</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="color_faded" name="color_faded" value="yes">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div class="toggle-group">
+        <span class="toggle-label">Kain terasa halus saat diraba?</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="fabric_smooth" name="fabric_smooth" value="yes">
+          <span class="slider"></span>
+        </label>
+      </div>
+      
+      <div style="margin-top: 1rem;">
+        <label><i class="fas fa-exclamation-triangle"></i> Jumlah Cacat Motif</label>
+        <div class="input-with-icon">
+          <i class="fas fa-hashtag"></i>
+          <input type="number" id="defect_count" name="defect_count" min="0" max="99" value="0" placeholder="0">
+        </div>
+      </div>
+    </div>
+  </div>
 
-    {% if result.image_url %}
-        <h4>Foto Referensi</h4>
-        <img src="{{ result.image_url }}"
-             alt="Foto batik yang dianalisis"
-             class="result-image">
+  <div style="margin-top:1.5rem; text-align: center;">
+    <button class="btn" type="submit">
+      <i class="fas fa-search"></i> Klasifikasi Sekarang
+    </button>
+  </div>
+</form>
+
+{% if result %}
+  <div class="result" style="animation: slideIn 0.5s ease-out;">
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+      <h2 style="color: #1f2937; margin-bottom: 0.5rem;">
+        <i class="fas fa-check-circle" style="color: #10b981;"></i> Hasil Klasifikasi
+      </h2>
+    </div>
+    
+    <div class="grid">
+      <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); text-align: center;">
+        <div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 0.5rem;">TEKNIK</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #667eea;">
+          <i class="fas fa-hand-sparkles"></i> {{ result.technique }}
+        </div>
+        <div style="margin-top: 1rem; text-align: left;">
+          <strong style="color: #374151;"><i class="fas fa-info-circle"></i> Penjelasan:</strong>
+          <ul style="margin-top: 0.5rem; color: #6b7280; font-size: 0.95rem;">
+            {% for e in result.exp_tech %}
+              <li>{{ e }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); text-align: center;">
+        <div style="color: #6b7280; font-size: 0.9rem; margin-bottom: 0.5rem;">KUALITAS</div>
+        <div style="font-size: 1.8rem; font-weight: 800;">
+          {% if result.quality == 'Premium' %}
+            <span style="color: #10b981;"><i class="fas fa-crown"></i> {{ result.quality }}</span>
+          {% elif result.quality == 'Reject' %}
+            <span style="color: #ef4444;"><i class="fas fa-times-circle"></i> {{ result.quality }}</span>
+          {% else %}
+            <span style="color: #f59e0b;"><i class="fas fa-star"></i> {{ result.quality }}</span>
+          {% endif %}
+        </div>
+        <div class="muted" style="margin-top: 0.5rem;">
+          <i class="fas fa-exclamation-triangle"></i> Jumlah cacat: {{ result.defect_count }}
+        </div>
+        <div style="margin-top: 1rem; text-align: left;">
+          <strong style="color: #374151;"><i class="fas fa-info-circle"></i> Penjelasan:</strong>
+          <ul style="margin-top: 0.5rem; color: #6b7280; font-size: 0.95rem;">
+            {% for e in result.exp_qual %}
+              <li>{{ e }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    {% if result.motif_name and result.motif_name != '-' %}
+      <div style="margin-top: 1.5rem; padding: 1rem; background: white; border-radius: 10px; text-align: center;">
+        <strong style="color: #374151;"><i class="fas fa-tag"></i> Nama Motif:</strong>
+        <span style="font-size: 1.2rem; color: #667eea; font-weight: 600; margin-left: 0.5rem;">{{ result.motif_name }}</span>
+      </div>
     {% endif %}
 
-    <p>
-        <strong>Teknik Pembuatan:</strong>
-        <span class="badge badge-tech">{{ result.technique }}</span>
-    </p>
-
-    <p>
-        <strong>Kualitas Produk:</strong>
-        {% if result.quality == "Premium" %}
-            <span class="badge badge-premium">{{ result.quality }}</span>
-        {% elif result.quality == "Reject" %}
-            <span class="badge badge-reject">{{ result.quality }}</span>
-        {% else %}
-            <span class="badge badge-standard">{{ result.quality }}</span>
-        {% endif %}
-        {% if result.defect_count is not none %}
-            <span style="font-size:0.85rem; color:#6b7280; margin-left:0.5rem;">
-                (Jumlah cacat: {{ result.defect_count }})
-            </span>
-        {% endif %}
-    </p>
-
-    <p><strong>Motif:</strong> {{ result.motif_name }}</p>
-
-    <h4>Analisis Penentuan Teknik</h4>
-    <ul>
-        {% for e in result.exp_tech %}
-            <li>{{ e }}</li>
-        {% endfor %}
-    </ul>
-
-    <h4>Analisis Penentuan Kualitas</h4>
-    <ul>
-        {% for e in result.exp_qual %}
-            <li>{{ e }}</li>
-        {% endfor %}
-    </ul>
-</div>
+    {% if result.image_url %}
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <strong style="color: #374151;"><i class="fas fa-image"></i> Gambar yang Diupload:</strong><br>
+        <img src="{{ result.image_url }}" style="max-width: 100%; max-height: 400px; border-radius:12px; margin-top:1rem; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+      </div>
+    {% endif %}
+  </div>
 {% endif %}
 
-<script>
-// Preview gambar saat dipilih
-document.getElementById("imageInput").addEventListener("change", function(event) {
-    const file = event.target.files[0];
-    const previewContainer = document.getElementById("previewContainer");
-    const previewImage = document.getElementById("previewImage");
+<style>
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
 
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImage.src = e.target.result;
-            previewContainer.style.display = "block";
-        };
-        reader.readAsDataURL(file);
-    } else {
-        previewContainer.style.display = "none";
-        previewImage.src = "";
-    }
+<script>
+// Image upload handling
+const uploadArea = document.getElementById('uploadArea');
+const imageInput = document.getElementById('imageInput');
+const preview = document.getElementById('preview');
+const previewImage = document.getElementById('previewImage');
+
+uploadArea.addEventListener('click', () => imageInput.click());
+
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.style.borderColor = '#667eea';
+  uploadArea.style.background = '#f0f4ff';
 });
 
-// Tidak perlu scroll lagi karena hasil sudah di samping
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.style.borderColor = '#d1d5db';
+  uploadArea.style.background = '#fafafa';
+});
+
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.style.borderColor = '#d1d5db';
+  uploadArea.style.background = '#fafafa';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    imageInput.files = e.dataTransfer.files;
+    displayImage(file);
+  }
+});
+
+imageInput.addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) displayImage(file);
+});
+
+function displayImage(file) {
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    previewImage.src = ev.target.result;
+    preview.style.display = 'block';
+    uploadArea.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  imageInput.value = '';
+  preview.style.display = 'none';
+  previewImage.src = '';
+  uploadArea.style.display = 'block';
+}
+
+// Convert checkboxes to proper form submission
+document.getElementById('classifyForm').addEventListener('submit', function(e) {
+  // Convert checkboxes: if checked, set to "yes", else set to "no"
+  const checkboxes = ['pattern_repeated', 'strokes_irregular', 'wax_visible', 'machine_like', 'color_sharp', 'color_faded', 'fabric_smooth'];
+  
+  checkboxes.forEach(name => {
+    const checkbox = document.getElementById(name);
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = name;
+    hiddenInput.value = checkbox.checked ? 'yes' : 'no';
+    this.appendChild(hiddenInput);
+    checkbox.disabled = true; // Disable to prevent duplicate submission
+  });
+});
+
+// Preset configurations
+function applyPreset(type) {
+  // Reset all first
+  // resetForm();
+  
+  if (type === 'tulis') {
+    document.getElementById('strokes_irregular').checked = true;
+    document.getElementById('wax_visible').checked = true;
+    document.getElementById('pattern_repeated').checked = false;
+    document.getElementById('machine_like').checked = false;
+    document.getElementById('color_sharp').checked = true;
+    document.getElementById('fabric_smooth').checked = true;
+    document.getElementById('defect_count').value = 0;
+  } else if (type === 'cap') {
+    document.getElementById('pattern_repeated').checked = true;
+    document.getElementById('wax_visible').checked = true;
+    document.getElementById('strokes_irregular').checked = false;
+    document.getElementById('machine_like').checked = false;
+    document.getElementById('color_sharp').checked = true;
+    document.getElementById('fabric_smooth').checked = true;
+    document.getElementById('defect_count').value = 0;
+  } else if (type === 'print') {
+    document.getElementById('wax_visible').checked = false;
+    document.getElementById('machine_like').checked = true;
+    document.getElementById('pattern_repeated').checked = true;
+    document.getElementById('strokes_irregular').checked = false;
+    document.getElementById('color_sharp').checked = true;
+    document.getElementById('defect_count').value = 0;
+  }
+  
+  // Visual feedback
+  document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.closest('.preset-btn').classList.add('active');
+}
+
+function resetForm() {
+  document.getElementById('classifyForm').reset();
+  document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+  clearImage();
+}
 </script>
 {% endblock %}
