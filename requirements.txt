@@ -3,3 +3,4 @@ SQLAlchemy==1.4.47
 Flask-SQLAlchemy==3.0.3
 Werkzeug==2.2.3
 python-dotenv==1.0.0
+reportlab==4.0.7

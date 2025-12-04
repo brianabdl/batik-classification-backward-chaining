@@ -1,9 +1,17 @@
+import copy
 import os
 import json
-from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash
+from datetime import datetime, timezone
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from io import BytesIO
 
 # --------------------
 # Configuration
@@ -42,7 +50,7 @@ class Rule(db.Model):
     conditions = db.Column(db.Text, nullable=False)  # JSON string
     conclusion = db.Column(db.String(128), nullable=False)
     explanation = db.Column(db.Text, nullable=True)  # JSON or plain text
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 
 class BatikRecord(db.Model):
@@ -57,7 +65,7 @@ class BatikRecord(db.Model):
     exp_tech = db.Column(db.Text)  # JSON array or text
     exp_qual = db.Column(db.Text)
     image_path = db.Column(db.String(256))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 
 # --------------------
@@ -274,7 +282,7 @@ def index():
         image_url = None
         file = request.files.get("image")
         if file and file.filename and allowed(file.filename):
-            filename = secure_filename(f"{datetime.now(datetime.timezone.utc).strftime('%Y%m%d%H%M%S')}_{file.filename}")
+            filename = secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
             save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             file.save(save_path)
             image_url = url_for("static", filename=f"uploads/{filename}")
@@ -297,6 +305,7 @@ def index():
         db.session.commit()
 
         result = {
+            "record_id": rec.id,
             "technique": technique,
             "quality": quality,
             "motif_name": motif_name or "-",
@@ -373,6 +382,189 @@ def delete_rule(rule_id):
     db.session.commit()
     flash("Rule deleted.", "success")
     return redirect(url_for("rules_page"))
+
+
+@app.route("/export-pdf/<int:record_id>")
+def export_pdf(record_id):
+    """Generate PDF report for a specific classification result"""
+    record = BatikRecord.query.get_or_404(record_id)
+    
+    # Parse JSON fields
+    try:
+        inputs = json.loads(record.inputs)
+    except:
+        inputs = {}
+    try:
+        exp_tech = json.loads(record.exp_tech or "[]")
+    except:
+        exp_tech = []
+    try:
+        exp_qual = json.loads(record.exp_qual or "[]")
+    except:
+        exp_qual = []
+    
+    # Create PDF in memory
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        textColor=colors.HexColor('#667eea'),
+        spaceAfter=8,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=11,
+        textColor=colors.HexColor('#1f2937'),
+        spaceAfter=4,
+        spaceBefore=8,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=9,
+        spaceAfter=2
+    )
+    
+    # Title
+    story.append(Paragraph("Laporan Klasifikasi Batik", title_style))
+    story.append(Paragraph(f"Tanggal: {record.created_at.strftime('%d %B %Y, %H:%M')}", normal_style))
+    
+    # Image if exists
+    if record.image_path:
+        try:
+            img_path = os.path.join(BASE_DIR, 'static', 'uploads', os.path.basename(record.image_path))
+            if os.path.exists(img_path):
+                img = RLImage(img_path, width=3*inch, height=3*inch, kind='proportional')
+                story.append(img)
+        except:
+            pass
+    
+    # Motif name
+    if record.motif_name:
+        story.append(Paragraph("Informasi Motif", heading_style))
+        data = [["Nama Motif:", record.motif_name]]
+        t = Table(data, colWidths=[2*inch, 4*inch])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f3f4f6')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
+        ]))
+        story.append(t)
+    
+    # Classification Results
+    story.append(Paragraph("Hasil Klasifikasi", heading_style))
+    
+    # Technique
+    tech_color = colors.HexColor('#667eea')
+    data = [
+        ["Teknik Pembuatan:", Paragraph(f"<b>{record.technique}</b>", normal_style)]
+    ]
+    t = Table(data, colWidths=[2*inch, 4*inch])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor('#e0e7ff')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
+    ]))
+    story.append(t)
+    
+    # Quality
+    qual_color = colors.HexColor('#10b981') if record.quality == 'Premium' else \
+                 colors.HexColor('#ef4444') if record.quality == 'Reject' else \
+                 colors.HexColor('#f59e0b')
+    
+    data = [
+        ["Kualitas:", Paragraph(f"<b>{record.quality}</b>", normal_style)],
+        ["Jumlah Cacat:", str(inputs.get('defect_count', 0))]
+    ]
+    t = Table(data, colWidths=[2*inch, 4*inch])
+    bg_color = colors.HexColor('#dcfce7') if record.quality == 'Premium' else \
+                colors.HexColor('#fee2e2') if record.quality == 'Reject' else \
+                colors.HexColor('#fef3c7')
+    
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), bg_color),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
+    ]))
+    story.append(t)
+    
+    # Technique Explanation
+    story.append(Paragraph("Penjelasan Teknik", heading_style))
+    for i, exp in enumerate(exp_tech, 1):
+        story.append(Paragraph(f"{i}. {exp}", normal_style))
+    
+    # Quality Explanation
+    story.append(Paragraph("Penjelasan Kualitas", heading_style))
+    for i, exp in enumerate(exp_qual, 1):
+        story.append(Paragraph(f"{i}. {exp}", normal_style))
+
+    # Input Details
+    story.append(Paragraph("Detail Input Karakteristik", heading_style))
+    input_data = [
+        ["Karakteristik", "Nilai"],
+        ["Pola berulang teratur", "Ya" if inputs.get('pattern_repeated') else "Tidak"],
+        ["Goresan tidak simetris", "Ya" if inputs.get('strokes_irregular') else "Tidak"],
+        ["Malam (wax) terlihat", "Ya" if inputs.get('wax_visible') else "Tidak"],
+        ["Pola seperti mesin", "Ya" if inputs.get('machine_like') else "Tidak"],
+        ["Warna tajam/cerah", "Ya" if inputs.get('color_sharp') else "Tidak"],
+        ["Warna pudar", "Ya" if inputs.get('color_faded') else "Tidak"],
+        ["Kain halus", "Ya" if inputs.get('kain_halus') else "Tidak"],
+        ["Jumlah cacat", str(inputs.get('defect_count', 0))]
+    ]
+    
+    t = Table(input_data, colWidths=[3*inch, 2*inch])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#667eea')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')])
+    ]))
+    story.append(t)
+    # Footer
+    story.append(Spacer(1,10))
+    footer_text = f"<i>Generated by Batik Expert System - {datetime.now().strftime('%d %B %Y')}</i>"
+    footer_style = copy.copy(normal_style)
+    footer_style.alignment = TA_CENTER
+    story.append(Paragraph(footer_text, footer_style))
+    
+    # Build PDF
+    doc.build(story)
+    buffer.seek(0)
+    
+    filename = f"klasifikasi_batik_{record.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    return send_file(buffer, as_attachment=True, download_name=filename, mimetype='application/pdf')
 
 
 # --------------------
